@@ -16,7 +16,6 @@ def shorten(event=None):
     if not url:
         gui_utils.show_error_message("Error", "Please enter a URL.")
         return
-
     try:
         short_url = url_shortener.shorten_url(url)
         if short_url:
@@ -54,26 +53,22 @@ def about():
 
 
 def open_readme():
-    """Open the README file in GitHub."""
     menu_utils.open_url_in_browser(
         "https://github.com/storlak/URL-shortener/blob/main/README.md"
     )
 
 
 def welcome():
-    """Open the project welcome page."""
     menu_utils.open_url_in_browser("https://github.com/storlak/URL-shortener")
 
 
 def open_license():
-    """Open the License file in GitHub."""
     menu_utils.open_url_in_browser(
         "https://github.com/storlak/URL-shortener/blob/main/LICENSE"
     )
 
 
 def quick_commands():
-    """Display available keyboard shortcuts."""
     gui_utils.show_info_message(
         "Keyboard Shortcuts",
         f"Shorten URL: {SHORTEN_URL}\n"
@@ -84,7 +79,6 @@ def quick_commands():
 
 
 def help_section(event=None):
-    """Open the Help page in browser."""
     menu_utils.open_url_in_browser(
         "https://github.com/storlak/URL-shortener/discussions"
     )
@@ -98,6 +92,7 @@ root = tk.Tk()
 root.title(APP_NAME)
 root.geometry(f"{WIDTH}x{HEIGHT}")
 root.configure(bg=BACKGROUND_COLOR)
+root.resizable(False, False)
 
 # ==========================
 #  Menu Bar
@@ -106,26 +101,22 @@ root.configure(bg=BACKGROUND_COLOR)
 menubar = tk.Menu(root)
 root.config(menu=menubar)
 
-# File Menu
 file_menu = tk.Menu(menubar, tearoff=0)
 file_menu.add_command(label="Exit", command=root.quit)
 menubar.add_cascade(label="File", menu=file_menu)
 
-# Edit Menu
 edit_menu = tk.Menu(menubar, tearoff=0)
 edit_menu.add_command(label="Shorten URL", command=shorten, accelerator="Alt+S")
 edit_menu.add_command(label="Copy Short URL", command=copy_url, accelerator="Alt+C")
 edit_menu.add_command(label="Clear URL", command=clear_entries, accelerator="Alt+L")
 menubar.add_cascade(label="Edit", menu=edit_menu)
 
-# Tools Menu
 tools_menu = tk.Menu(menubar, tearoff=0)
 tools_menu.add_command(label="Quick Commands", command=quick_commands)
 tools_menu.add_separator()
 tools_menu.add_command(label="History")  # placeholder
 menubar.add_cascade(label="Tools", menu=tools_menu)
 
-# Help Menu
 help_menu = tk.Menu(menubar, tearoff=0)
 help_menu.add_command(label="Welcome", command=welcome)
 help_menu.add_command(label="Help", command=help_section, accelerator="F1")
@@ -142,46 +133,69 @@ menubar.add_cascade(label="Help", menu=help_menu)
 root.bind("<Alt-s>", shorten)
 root.bind("<Alt-c>", lambda e: copy_url())
 root.bind("<Alt-l>", lambda e: clear_entries())
+root.bind("<Return>", shorten)
 root.bind("<F1>", help_section)
 
 # ==========================
-#  Widgets
+#  Frames & Widgets
 # ==========================
 
-longurl_label = tk.Label(root, text="Enter a Long URL to Shorten", fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
-longurl_entry = tk.Entry(root, width=40)
+frame_input = tk.Frame(root, bg=BACKGROUND_COLOR)
+frame_input.pack(pady=15)
 
-shorten_button = tk.Button(root, text="Shorten URL", fg="black", bg="Turquoise", command=shorten)
+longurl_label = tk.Label(frame_input, text="Enter a Long URL to Shorten", fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
+longurl_label.pack(pady=5)
+
+longurl_entry = tk.Entry(frame_input, width=50)
+longurl_entry.pack(pady=5)
+
+shorten_button = tk.Button(frame_input, text="Shorten URL", fg="black", bg="Turquoise", command=shorten)
+shorten_button.pack(pady=5)
 
 separator = ttk.Separator(root, orient="horizontal")
+separator.pack(fill="x", padx=10, pady=10)
 
-shorturl_label = tk.Label(root, text="Shortened URL", fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
-shorturl_entry = tk.Entry(root, width=40)
+frame_output = tk.Frame(root, bg=BACKGROUND_COLOR)
+frame_output.pack(pady=10)
 
-copyurl_button = tk.Button(root, text="Copy", fg="black", bg="Turquoise", command=copy_url)
+shorturl_label = tk.Label(frame_output, text="Shortened URL", fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
+shorturl_label.pack(pady=5)
 
-clear_button = tk.Button(root, text="Clear Clipboard", fg="black", bg="Turquoise", command=clear_entries)
+shorturl_entry = tk.Entry(frame_output, width=50)
+shorturl_entry.pack(pady=5)
+
+copyurl_button = tk.Button(frame_output, text="Copy", fg="black", bg="Turquoise", command=copy_url)
+copyurl_button.pack(pady=5)
+
+clear_button = tk.Button(frame_output, text="Clear Clipboard", fg="black", bg="Turquoise", command=clear_entries)
+clear_button.pack(pady=5)
 
 bot_label = tk.Label(root, text=f"Version: {APP_VERSION} - {AUTHOR}", fg="black", bg="Turquoise")
+bot_label.pack(side="bottom", fill="x")
 
 # ==========================
-#  Layout
+#  Tooltip Support
 # ==========================
+def create_tooltip(widget, text):
+    tooltip = tk.Toplevel(widget)
+    tooltip.withdraw()
+    tooltip.overrideredirect(True)
+    label = tk.Label(tooltip, text=text, bg="yellow", relief="solid", borderwidth=1)
+    label.pack()
+    def enter(event):
+        x, y, cx, cy = widget.bbox("insert")
+        x += widget.winfo_rootx() + 25
+        y += widget.winfo_rooty() + 20
+        tooltip.geometry(f"+{x}+{y}")
+        tooltip.deiconify()
+    def leave(event):
+        tooltip.withdraw()
+    widget.bind("<Enter>", enter)
+    widget.bind("<Leave>", leave)
 
-widgets = [
-    (longurl_label, {"pady": 5}),
-    (longurl_entry, {}),
-    (shorten_button, {"pady": 5}),
-    (separator, {"fill": "x", "padx": 5, "pady": 5}),
-    (shorturl_label, {"pady": 5}),
-    (shorturl_entry, {}),
-    (copyurl_button, {"pady": 5}),
-    (clear_button, {"pady": 5}),
-    (bot_label, {"side": "bottom", "fill": "x"})
-]
-
-for widget, opts in widgets:
-    widget.pack(**opts)
+create_tooltip(shorten_button, "Click to shorten the entered URL")
+create_tooltip(copyurl_button, "Click to copy the shortened URL")
+create_tooltip(clear_button, "Click to clear both URL fields")
 
 # ==========================
 #  Mainloop
