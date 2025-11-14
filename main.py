@@ -14,15 +14,16 @@ def shorten(event=None):
     """Shorten the entered URL."""
     url = longurl_entry.get().strip()
     if not url:
-        gui_utils.show_error_message("Error", "Please enter a URL.")
+        update_status("Please enter a URL.", "red")
         return
     try:
         short_url = url_shortener.shorten_url(url)
         if short_url:
             shorturl_entry.delete(0, tk.END)
             shorturl_entry.insert(0, short_url)
+            update_status("URL shortened successfully!", "green")
     except Exception as e:
-        gui_utils.show_error_message("Error", f"An error occurred: {e}")
+        update_status(f"Error: {str(e)}", "red")
 
 
 def copy_url():
@@ -32,23 +33,28 @@ def copy_url():
         root.clipboard_clear()
         root.clipboard_append(shortened_url)
         root.update()
-        gui_utils.show_info_message("Success", "Shortened URL copied to clipboard.")
+        update_status("Shortened URL copied!", "green")
     else:
-        gui_utils.show_warning_message("Warning", "No shortened URL found.")
+        update_status("No shortened URL to copy.", "red")
 
 
 def clear_entries():
     """Clear both URL input fields."""
     longurl_entry.delete(0, tk.END)
     shorturl_entry.delete(0, tk.END)
+    update_status("Fields cleared.", "black")
+
+
+def update_status(message, color="black"):
+    """Update the status label text and color."""
+    status_label.config(text=message, fg=color)
 
 
 def about():
-    """Display About dialog."""
     current_date = "15.05.2024"
     gui_utils.show_info_message(
         "About",
-        f"{APP_NAME}\nVersion: {APP_VERSION}\nAuthor: {AUTHOR}\nLast Update: {current_date}",
+        f"{APP_NAME}\nVersion: {APP_VERSION}\nAuthor: {AUTHOR}\nLast Update: {current_date}"
     )
 
 
@@ -74,7 +80,7 @@ def quick_commands():
         f"Shorten URL: {SHORTEN_URL}\n"
         f"Copy Shortened URL: {COPY_URL}\n"
         f"Clear Clipboard: {CLEAR_URL}\n"
-        f"Help: {HELP}",
+        f"Help: {HELP}"
     )
 
 
@@ -97,26 +103,29 @@ root.resizable(False, False)
 # ==========================
 #  Menu Bar
 # ==========================
-
 menubar = tk.Menu(root)
 root.config(menu=menubar)
 
+# File
 file_menu = tk.Menu(menubar, tearoff=0)
 file_menu.add_command(label="Exit", command=root.quit)
 menubar.add_cascade(label="File", menu=file_menu)
 
+# Edit
 edit_menu = tk.Menu(menubar, tearoff=0)
 edit_menu.add_command(label="Shorten URL", command=shorten, accelerator="Alt+S")
 edit_menu.add_command(label="Copy Short URL", command=copy_url, accelerator="Alt+C")
 edit_menu.add_command(label="Clear URL", command=clear_entries, accelerator="Alt+L")
 menubar.add_cascade(label="Edit", menu=edit_menu)
 
+# Tools
 tools_menu = tk.Menu(menubar, tearoff=0)
 tools_menu.add_command(label="Quick Commands", command=quick_commands)
 tools_menu.add_separator()
 tools_menu.add_command(label="History")  # placeholder
 menubar.add_cascade(label="Tools", menu=tools_menu)
 
+# Help
 help_menu = tk.Menu(menubar, tearoff=0)
 help_menu.add_command(label="Welcome", command=welcome)
 help_menu.add_command(label="Help", command=help_section, accelerator="F1")
@@ -137,53 +146,54 @@ root.bind("<Return>", shorten)
 root.bind("<F1>", help_section)
 
 # ==========================
-#  Frames & Widgets
+#  Input/Output Frames
 # ==========================
 
 frame_input = tk.Frame(root, bg=BACKGROUND_COLOR)
-frame_input.pack(pady=15)
+frame_input.pack(pady=15, padx=10, fill="x")
 
-longurl_label = tk.Label(frame_input, text="Enter a Long URL to Shorten", fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
-longurl_label.pack(pady=5)
-
+tk.Label(frame_input, text="Enter Long URL", fg=TEXT_COLOR, bg=BACKGROUND_COLOR).grid(row=0, column=0, sticky="w")
 longurl_entry = tk.Entry(frame_input, width=50)
-longurl_entry.pack(pady=5)
+longurl_entry.grid(row=1, column=0, padx=5, pady=5)
 
 shorten_button = tk.Button(frame_input, text="Shorten URL", fg="black", bg="Turquoise", command=shorten)
-shorten_button.pack(pady=5)
+shorten_button.grid(row=1, column=1, padx=5, pady=5)
 
 separator = ttk.Separator(root, orient="horizontal")
 separator.pack(fill="x", padx=10, pady=10)
 
 frame_output = tk.Frame(root, bg=BACKGROUND_COLOR)
-frame_output.pack(pady=10)
+frame_output.pack(pady=10, padx=10, fill="x")
 
-shorturl_label = tk.Label(frame_output, text="Shortened URL", fg=TEXT_COLOR, bg=BACKGROUND_COLOR)
-shorturl_label.pack(pady=5)
-
+tk.Label(frame_output, text="Shortened URL", fg=TEXT_COLOR, bg=BACKGROUND_COLOR).grid(row=0, column=0, sticky="w")
 shorturl_entry = tk.Entry(frame_output, width=50)
-shorturl_entry.pack(pady=5)
+shorturl_entry.grid(row=1, column=0, padx=5, pady=5)
 
 copyurl_button = tk.Button(frame_output, text="Copy", fg="black", bg="Turquoise", command=copy_url)
-copyurl_button.pack(pady=5)
+copyurl_button.grid(row=1, column=1, padx=5, pady=5)
 
-clear_button = tk.Button(frame_output, text="Clear Clipboard", fg="black", bg="Turquoise", command=clear_entries)
-clear_button.pack(pady=5)
+clear_button = tk.Button(frame_output, text="Clear Fields", fg="black", bg="Turquoise", command=clear_entries)
+clear_button.grid(row=2, column=0, columnspan=2, pady=5)
+
+# Status label for messages
+status_label = tk.Label(root, text="", fg="black", bg=BACKGROUND_COLOR)
+status_label.pack(pady=5)
 
 bot_label = tk.Label(root, text=f"Version: {APP_VERSION} - {AUTHOR}", fg="black", bg="Turquoise")
 bot_label.pack(side="bottom", fill="x")
 
 # ==========================
-#  Tooltip Support
+#  Tooltips
 # ==========================
 def create_tooltip(widget, text):
+    """Simple hover tooltip."""
     tooltip = tk.Toplevel(widget)
     tooltip.withdraw()
     tooltip.overrideredirect(True)
     label = tk.Label(tooltip, text=text, bg="yellow", relief="solid", borderwidth=1)
     label.pack()
     def enter(event):
-        x, y, cx, cy = widget.bbox("insert")
+        x, y, _, _ = widget.bbox("insert") if widget.bbox("insert") else (0,0,0,0)
         x += widget.winfo_rootx() + 25
         y += widget.winfo_rooty() + 20
         tooltip.geometry(f"+{x}+{y}")
@@ -195,7 +205,7 @@ def create_tooltip(widget, text):
 
 create_tooltip(shorten_button, "Click to shorten the entered URL")
 create_tooltip(copyurl_button, "Click to copy the shortened URL")
-create_tooltip(clear_button, "Click to clear both URL fields")
+create_tooltip(clear_button, "Click to clear input/output fields")
 
 # ==========================
 #  Mainloop
